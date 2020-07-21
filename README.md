@@ -12,3 +12,8 @@ PROJET 2 Prédiction de l'expression :
 
       CNN_ModelExpression.py -> script pour entrainer et tester le modèle 
       TL_preload.py -> script pour récupérer les données des pics CAGE et les pré-traiter
+
+
+
+
+Note : les "# In[1]:" dans le code sont présents car j'ai exporté les scripts de mon Jupyter Notebook
