@@ -16,7 +16,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import time
 import sys
-from sklearn.metrics import classification_report, f1_score, precision_recall_fscore_support, roc_curve,roc_auc_score,RocCurveDisplay
+from sklearn.metrics import classification_report, f1_score, precision_recall_fscore_support, roc_curve,roc_auc_score,r2_score,mean_squared_error
 
 
 # In[25]:
@@ -387,6 +387,15 @@ class CnnModel(nn.Module):
 
 
 def load_data(path_to_data,batch,split_ratio = 0.2):
+    
+    """
+    General Model
+    This function load sequences, expressions and names for the general model and split the training data into a validation loader and
+    a train loader 
+    :path_to_data : path to data (seqs , genenames and exps numpy files)
+    :batch: size of the batch
+    :split_ratio: ratio to split the training data into valid and training loader
+    """
 
     seq_train_path = path_to_data + "seqs_trainset.npy"
     exps_train_path = path_to_data + "exps_trainset.npy"
@@ -396,6 +405,7 @@ def load_data(path_to_data,batch,split_ratio = 0.2):
     exps_test_path = path_to_data + "exps_testset.npy"
     genenames_test_path = path_to_data + "genenames_testset.npy"
 
+    
     train_data = SeqDataset(seqs_path=seq_train_path,
                             genenames_path=genenames_train_path,
                             expressions_path=exps_train_path)
@@ -428,6 +438,16 @@ def load_data(path_to_data,batch,split_ratio = 0.2):
 
 
 def load_clusterdata(path_to_data,batch,cluster,split_ratio = 0.2):
+    
+    """
+    Cluster Model
+    This function load sequences, expressions and names for the cluster and split the training data into a validation loader and
+    a train loader 
+    :path_to_data : path to data (seqs , genenames and exps numpy files)
+    :cluster : indice of the cluster
+    :batch: size of the batch
+    :split_ratio: ratio to split the training data into valid and training loader
+    """
     
     seq_train_path = path_to_data + "cluster"+ str(cluster)+"_seqs_trainset.npy"
     exps_train_path = path_to_data + "cluster"+ str(cluster)+"_exps_trainset.npy"
@@ -470,6 +490,13 @@ def load_clusterdata(path_to_data,batch,cluster,split_ratio = 0.2):
 
 def load_testdatacluster(cluster, batch):
     
+    """
+    For load the cluster test loader on an other cluster trained model
+    This function load test sequences, expressions and names for the cluster
+    :cluster : indice of the cluster to load test data
+    :batch: size of the batch
+    """
+    
     if cluster == 0 :
         path = "./dataset/"
         seq_test_path = path + "seqs_testset.npy"
@@ -482,7 +509,8 @@ def load_testdatacluster(cluster, batch):
                                expressions_path=exps_test_path)
 
         test_loader = DataLoader(test_data, batch_size= batch)
-        
+        print("test cluster data :",len(test_loader)*batch)
+
     
     else:
         path = "./cluster_dataset/"
@@ -506,18 +534,19 @@ def load_testdatacluster(cluster, batch):
 
 
 def training_pytorch_model(custom_model, train_loader, valid_loader, batch, epoch,
-                           criterion, optimizer, device,path, patience=5, keep_track=True):
+                           criterion, optimizer, device,path, patience=7, keep_track=True):
     """
     This function trains a pytorch model with progress bar and early stopping
     :custom_model: PyTorch model
     :train_loader: PyTorch DataLoader (containing train data)
     :valid_loader: PyTorch DataLoader (containing validation data)
-    :hyper_param_batch: int (batch size)
-    :hyper_paraam_epoch: int (number of epochs)
-    :criterion: PyTorch Function (loss function)
-    :optimizer: Pytorch Optim (optimizer)
+    :batch: batch size
+    :epoch: number of epochs
+    :criterion: PyTorch Loss function
+    :optimizer: Pytorch Optimizer
     :device: Pytorch Device (GPU or CPU)
-    :patience: int (early stopping patience)
+    :path : path to save model's parameters
+    :patience: early stopping patience
     :keep_track: bool (if set to True, will return tracking parameters)
     """
     # to track the training loss as the model trains
@@ -537,6 +566,7 @@ def training_pytorch_model(custom_model, train_loader, valid_loader, batch, epoc
     avg_valid_pear = []
     early_id = 0
 
+    custom_model.to(device)
     early_stopping = EarlyStopping(path,patience=patience, verbose=True)
 
     for e in range(epoch):
@@ -554,7 +584,6 @@ def training_pytorch_model(custom_model, train_loader, valid_loader, batch, epoc
                     
             exp = exp.float() 
             
-            #print(exp)
             # Forward pass
             outputs = custom_model(seq)
             
@@ -618,9 +647,11 @@ def training_pytorch_model(custom_model, train_loader, valid_loader, batch, epoc
         valid_loss = np.average(valid_losses)
         avg_train_losses.append(train_loss)
         avg_valid_losses.append(valid_loss)
+        valid_pearson = np.average(valid_pear)
+        valid_spearman = np.average(valid_spear)
 
-        avg_valid_pear.append(np.average(valid_pear))
-        avg_valid_spear.append(np.average(valid_spear))
+        avg_valid_pear.append(valid_pearson)
+        avg_valid_spear.append(valid_spearman)
 
         train_losses = []
         valid_losses = []
@@ -657,8 +688,9 @@ def test_pytorch_model(custom_model, test_loader, device,path_save, verbose=True
     """
     This function tests a PyTorch model.
     :custom_model: PyTorch model
-    :test_loader: PyTorch DataLoader (contains testing set)
+    :test_loader: PyTorch test dataLoader (contains testing set)
     :device: PyTorch device (GPU or CPU)
+    :path_save : path to load model's parameters
     :verbose: bool (if set to True, will display Spearman and Pearson correlations).
     """
     # initialize lists to monitor test loss and accuracy
@@ -687,6 +719,12 @@ def test_pytorch_model(custom_model, test_loader, device,path_save, verbose=True
     if verbose is True:
         print("Spearman correlation: ", spearmanr(preds, true)[0])
         print("Pearson correlation: ", pearsonr(preds,true)[0])
+        
+    r2_s = r2_score(true, preds)
+    mse =  mean_squared_error(true, preds)
+    print(r2_score)
+    print(mse)
+   
 
     return preds, true
 
@@ -695,7 +733,19 @@ def test_pytorch_model(custom_model, test_loader, device,path_save, verbose=True
 
 
 def plot_loss_curve(avg_train_losses, avg_valid_losses,indice,earlyid,batch_size,epoch,spearman_test,pearson_test):
-
+    
+    """
+    This function plot and saves loss curves.
+    :avg_train_losses: list (list of avg train loss per epoch)
+    :avg_valid_losses: list (list of avg valid loss per epoch)
+    :indice : indice of the cluster
+    :earlyid: int (if not set to None, will show a line showing early stopping point)
+    :batch_size: size of the batch
+    :epoch: number of epochs    
+    :spearman_test: value of the spearman correlation for the cluster
+    :pearson_test: value of the pearson correlation for the cluster
+    """
+    
     if indice == 0 :
         imgname = 'img_LossModel'+ '_e'+ str(epoch)+'_b'+ str(batch_size)
     else : 
@@ -737,7 +787,19 @@ def plot_loss_curve(avg_train_losses, avg_valid_losses,indice,earlyid,batch_size
 
 
 def plot_corr_curve(avg_valid_pear, avg_valid_spear,indice,earlyid,batch_size,epoch,spearman_test,pearson_test):
-
+    """
+    This function saves/plot loss curves.
+    :avg_valid_pear: list (list of avg valid Pearson correlation per epoch)
+    :avg_valid_spear: list (list of avg valid Spearman correlation per epoch
+    :indice : indice of the cluster
+    :earlyid: int (if not set to None, will show a line showing early stopping point)
+    :batch_size: size of the batch
+    :epoch: number of epochs    
+    :spearman_test: value of the spearman correlation for the cluster
+    :pearson_test: value of the pearson correlation for the cluster
+    """
+    
+    
     if indice == 0 :
         imgname = 'img_CorrModel'+ '_e'+ str(epoch)+'_b'+ str(batch_size)
     else : 
@@ -772,28 +834,6 @@ def plot_corr_curve(avg_valid_pear, avg_valid_spear,indice,earlyid,batch_size,ep
     fig.savefig(path, bbox_inches='tight')  
 
 
-# In[36]:
-
-
-def write_clustersresults(clusters, clusters_spearman, clusters_pearson, path_to_result="clusters_results.txt"):
-
-    f = open(path_to_result, "w")
-    f.write("Clusters" + "\t" + "spearman_corr" + "\t" + "pearson_corr" + "\n")
-    for i in range(clusters):
-        f.write("Cluster " + str(i)+ "\t" + str(clusters_spearman[i]) + "\t" + str(clusters_pearson[i]) + "\n")
-    f.close
-
-
-# In[2]:
-
-
-def write_transferresults(cluster,cluster_test,spearman_test,pearson_test) : 
-    path = "./resultstxt/result_cluster"+str(cluster)
-    f = open(path, "a")
-    f.write("Test cluster " + str(cluster) + " -> cluster " + str(cluster_test) + ": spearman = "+ str(spearman_test) + " pearson = " + str(pearson_test)+ "\n")
-    f.close    
-
-
 # In[1]:
 
 
@@ -801,6 +841,32 @@ def write_listtransferresults(cluster,cluster_len,spearmantest_list,pearsontest_
     path = "./resultstxt/result_testcluster"+str(cluster)
     f = open(path, "w")
     for i in range(cluster_len):
+        f.write("Test cluster " + str(cluster) + " -> cluster " + str(i) + ": spearman = "+ str(spearmantest_list[i]) + " pearson = " + str(pearsontest_list[i])+ "\n")
+    f.close    
+
+
+# In[ ]:
+
+
+def write_resultfile(path,cluster,cluster_len,spearmantest_list,pearsontest_list) : 
+    """
+    This function saves cluster's spearman and pearson test for one cluster .
+    :path: path to save results 
+    :cluster: indice of the cluster
+    :cluster_len : number of clusters
+    :spearmantest_list: list of spearman tests values for the cluster 
+    :pearsontest_list: list of pearson tests values for the cluster 
+    """
+    
+    f = open(path, "a")
+    f.write("\n")
+    f.write("Cluster"+str(cluster)+" : \n")
+    for i in range(cluster_len):
+        if  (pearsontest_list[i]>0.5) :
+            print(" ||||| Test cluster " + str(cluster) + " -> cluster " + str(i) + ": pearson = " + str(pearsontest_list[i])+ " ||||| \n")
+        if (spearmantest_list[i]>0.5) :
+            print(" ||||| Test cluster " + str(cluster) + " -> cluster " + str(i) + ": spearman = "+ str(spearmantest_list[i]) + " ||||| \n")
+
         f.write("Test cluster " + str(cluster) + " -> cluster " + str(i) + ": spearman = "+ str(spearmantest_list[i]) + " pearson = " + str(pearsontest_list[i])+ "\n")
     f.close    
 
@@ -814,33 +880,39 @@ for i in range(21):
     print("\n***** Démarrage entrainement/test avec le cluster",i,"*****\n")
 
     #paramètres du modèle
-    
-    batch_size = 64
-    epoch = 2
+    text = "2CONV_log"
+    epoch = 300
     net = CnnModel()
+    #learning_rate = 0.00001
+    #optimizer = optim.Adam(net.parameters(), lr=learning_rate, betas=(0.9, 0.999))
     criterion = nn.SmoothL1Loss()
     optimizer = torch.optim.Adam(net.parameters())
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    
+    batch_size = 256
     if(i == 0) :
+        #modèle général
         #paramètres du modèle
+        batch_sizec0 = 700
         path = "./dataset/"
-        train_loader, valid_loader, test_loader = load_data(path,batch_size)
+        train_loader, valid_loader, test_loader = load_data(path,batch_sizec0)
         path_save = "CNNModel_checkpoint.pt"
+        print("Save at",path_save)
+        avg_train_losses, avg_valid_losses, avg_valid_spear, avg_valid_pear, early_id = training_pytorch_model(net, train_loader, valid_loader, batch_sizec0, epoch, criterion, optimizer, device,path_save)
+
     else :
+        #modèle spécifique
         path_save = "CNNModelcluster"+str(i)+"_checkpoint.pt"
+        print("Save at",path_save)
         path = "./cluster_dataset/"
         train_loader, valid_loader, test_loader = load_clusterdata(path,batch_size,i)
-
-    print("Save at",path_save)
-      
-    avg_train_losses, avg_valid_losses, avg_valid_spear, avg_valid_pear, early_id = training_pytorch_model(net, train_loader, valid_loader, batch_size, epoch, criterion, optimizer, device,path_save)
+        avg_train_losses, avg_valid_losses, avg_valid_spear, avg_valid_pear, early_id = training_pytorch_model(net, train_loader, valid_loader, batch_size, epoch, criterion, optimizer, device,path_save)
     
     print("\n*** Entrainement cluster",i,"terminé ***\n")
 
     spearmantest_list = []
     pearsontest_list = []
-    for j in range(1,21) :
+    print("model save at",path_save)
+    for j in range(21) :
         
         print("\n--- Test transfer avec cluster",j,"---\n")
         test_loader = load_testdatacluster(j, batch_size)
@@ -851,8 +923,12 @@ for i in range(21):
         spearmantest_list.append(spearman_test)
         pearsontest_list.append(pearson_test)        
         
-        write_transferresults(i,j,spearman_test,pearson_test)
-    write_listtransferresults(i,cluster_len,spearmantest_list,pearsontest_list)
+        #write_transferresults(i,j,spearman_test,pearson_test)
+        
+    path_file = "./resultstxt/"+text+"_e"+ str(epoch)+"_bc0"+ str(batch_sizec0)+"_bcall"+str(batch_size)
+    write_resultfile(path_file,i,21,spearmantest_list,pearsontest_list)
+
+    #write_listtransferresults(i,21,spearmantest_list,pearsontest_list,batch_size,epoch,text)
 
     print("\n***** Fin entrainement/test avec le cluster",i,"*****\n")
 
