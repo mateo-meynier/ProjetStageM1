@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
+# In[2]:
 
 
 import numpy as np
@@ -46,16 +46,16 @@ def saveDataSet(path,train_genenames, train_expressions, train_sequences, test_g
     train_sequences = np.array(train_sequences)
     train_expressions = np.array(train_expressions)
     
-    #variance_y = np.var(temptrain_expressions)
-    #moyenne_y = np.average(temptrain_expressions)
-    #train_expressionsnorm = (temptrain_expressions-moyenne_y)/variance_y
+    #variance_y = np.var(train_expressions)
+    #moyenne_y = np.mean(train_expressions)
+    #train_expressionsnorm = (train_expressions-moyenne_y)/variance_y
     
-    print('after',train_expressions)
-    train_expressions = train_expressions.reshape(-1,1)
-    dataset_scaler = StandardScaler()
-    train_expressions = dataset_scaler.fit_transform(train_expressions)
-    train_expressions = train_expressions.reshape(-1)
     print('before',train_expressions)
+    #train_expressions = train_expressions.reshape(-1,1)
+    #dataset_scaler = StandardScaler()
+    #train_expressions = dataset_scaler.fit_transform(train_expressions)
+    #train_expressions = train_expressions.reshape(-1)
+    #print('after',train_expressionsnorm)
 
     np.save(path + "genenames_trainset.npy", train_genenames)
     np.save(path + "seqs_trainset.npy", train_sequences)
@@ -66,15 +66,15 @@ def saveDataSet(path,train_genenames, train_expressions, train_sequences, test_g
     test_sequences = np.array(test_sequences)
     test_expressions = np.array(test_expressions)
     
-    #variance_y = np.var(temptest_expressions)
-    #moyenne_y = np.average(temptest_expressions)
-    #test_expressionsnorm = (temptest_expressions-moyenne_y)/variance_y
+    #variance_y = np.var(test_expressions)
+    #moyenne_y = np.mean(test_expressions)
+    #test_expressionsnorm = (test_expressions-moyenne_y)/variance_y
     
     print("before",test_expressions)
-    test_expressions = test_expressions.reshape(-1,1)
-    test_expressions = dataset_scaler.transform(test_expressions)
-    test_expressions = test_expressions.reshape(-1)
-    print("after",test_expressions)
+    #test_expressions = test_expressions.reshape(-1,1)
+    #test_expressions = dataset_scaler.transform(test_expressions)
+    #test_expressions = test_expressions.reshape(-1)
+    #print("after",test_expressionsnorm)
 
     np.save(path + "genenames_testset.npy", test_genenames)
     np.save(path + "seqs_testset.npy", test_sequences)
@@ -92,16 +92,15 @@ def saveClusterDataSet(path,ctrain_genenames, ctrain_sequences, ctrain_expressio
     ctrain_expressions = np.array(ctrain_expressions)
     
     #variance_y = np.var(ctrain_expressions)
-    #moyenne_y = np.average(ctrain_expressions)
+    #moyenne_y = np.mean(ctrain_expressions)
     #ctrain_expressionsnorm = (ctrain_expressions-moyenne_y)/variance_y
     
     print("before",ctrain_expressions)
-    ctrain_expressions = ctrain_expressions.reshape(-1,1)
-    cluster_scaler = StandardScaler()
-    ctrain_expressions = cluster_scaler.fit_transform(ctrain_expressions)
-
-    ctrain_expressions = ctrain_expressions.reshape(-1)
-    print("after",ctrain_expressions)
+    #ctrain_expressions = ctrain_expressions.reshape(-1,1)
+    #cluster_scaler = StandardScaler()
+    #ctrain_expressions = cluster_scaler.fit_transform(ctrain_expressions)
+    #ctrain_expressions = ctrain_expressions.reshape(-1)
+    #print("after",ctrain_expressionsnorm)
 
     np.save(path + "cluster"+ str(cluster)+"_genenames_trainset.npy", ctrain_genenames)
     np.save(path + "cluster"+ str(cluster)+"_seqs_trainset.npy", ctrain_sequences)
@@ -113,15 +112,15 @@ def saveClusterDataSet(path,ctrain_genenames, ctrain_sequences, ctrain_expressio
     ctest_expressions = np.array(ctest_expressions)
     
     #variance_y = np.var(ctest_expressions)
-    #moyenne_y = np.average(ctest_expressions)
+    #moyenne_y = np.mean(ctest_expressions)
     #ctest_expressionsnorm = (ctest_expressions-moyenne_y)/variance_y  
     
     print("before",ctest_expressions)
     
-    ctest_expressions = ctest_expressions.reshape(-1,1)
-    ctest_expressions = cluster_scaler.transform(ctest_expressions)
-    ctest_expressions= ctest_expressions.reshape(-1)
-    print("after",ctest_expressions)
+    #ctest_expressions = ctest_expressions.reshape(-1,1)
+    #ctest_expressions = cluster_scaler.transform(ctest_expressions)
+    #ctest_expressions= ctest_expressions.reshape(-1)
+    #print("after",ctest_expressionsnorm)
 
     np.save(path + "cluster"+ str(cluster)+"_genenames_testset.npy", ctest_genenames)
     np.save(path + "cluster"+ str(cluster)+"_seqs_testset.npy", ctest_sequences)
@@ -130,6 +129,78 @@ def saveClusterDataSet(path,ctrain_genenames, ctrain_sequences, ctrain_expressio
 
 
 # In[5]:
+
+
+def saveDataSetlog(path,train_genenames, train_expressions, train_sequences, test_genenames, test_expressions, test_sequences) :
+    
+    train_genenames = np.array(train_genenames)
+    train_sequences = np.array(train_sequences)
+    train_expressions = np.array(train_expressions)
+
+    
+    print('before',train_expressions)
+    train_expressionslog = np.log(train_expressions)
+    print('after',train_expressionslog)
+
+
+    np.save(path + "genenames_trainset.npy", train_genenames)
+    np.save(path + "seqs_trainset.npy", train_sequences)
+    np.save(path + "exps_trainset.npy", train_expressionslog)
+    print("Enregistrement du training set fini...\n")
+    
+    test_genenames = np.array(test_genenames)
+    test_sequences = np.array(test_sequences)
+    test_expressions = np.array(test_expressions)
+
+    
+    print("before",test_expressions)
+    test_expressionslog = np.log(test_expressions)
+
+    print("after",test_expressionslog)
+
+    np.save(path + "genenames_testset.npy", test_genenames)
+    np.save(path + "seqs_testset.npy", test_sequences)
+    np.save(path + "exps_testset.npy", test_expressionslog)
+    print("Enregistrement du test set fini...\n")
+
+
+# In[6]:
+
+
+def saveClusterDataSetlog(path,ctrain_genenames, ctrain_sequences, ctrain_expressions ,ctest_genenames,ctest_sequences,ctest_expressions,cluster):
+    
+    ctrain_genenames = np.array(ctrain_genenames)
+    ctrain_sequences = np.array(ctrain_sequences)
+    ctrain_expressions = np.array(ctrain_expressions)
+
+    
+    ctrain_expressionslog = np.log(ctrain_expressions)
+    print(ctrain_expressions)
+    print(ctrain_expressionslog)
+
+    np.save(path + "cluster"+ str(cluster)+"_genenames_trainset.npy", ctrain_genenames)
+    np.save(path + "cluster"+ str(cluster)+"_seqs_trainset.npy", ctrain_sequences)
+    np.save(path + "cluster"+ str(cluster)+"_exps_trainset.npy", ctrain_expressionslog)
+    print("Enregistrement du training set", cluster," fini...\n")
+    
+    ctest_genenames = np.array(ctest_genenames)
+    ctest_sequences = np.array(ctest_sequences)
+    ctest_expressions = np.array(ctest_expressions)
+ 
+    
+    print("before",ctest_expressions)
+    
+    ctest_expressionslog = np.log(ctest_expressions)
+    
+    print("after",ctest_expressionslog)
+
+    np.save(path + "cluster"+ str(cluster)+"_genenames_testset.npy", ctest_genenames)
+    np.save(path + "cluster"+ str(cluster)+"_seqs_testset.npy", ctest_sequences)
+    np.save(path + "cluster"+ str(cluster)+"_exps_testset.npy", ctest_expressionslog)
+    print("Enregistrement du test set", cluster," fini...\n")
+
+
+# In[7]:
 
 
 #%%time
@@ -141,7 +212,7 @@ with open('cluster_101bp_sumQ20.fa') as fasta_file:
 print("Nbr exemples :",len(clusters))
 
 
-# In[6]:
+# In[8]:
 
 
 clusters = list(set(clusters)) #rendre la liste unique
@@ -149,7 +220,7 @@ print("Clusters :",clusters)
 print("nombre Clusters :",len(clusters))
 
 
-# In[7]:
+# In[9]:
 
 
 #%%time
@@ -164,7 +235,7 @@ with open('cluster_101bp_sumQ20.fa') as fasta_file:
         cluster_list[cluster].append(seq_record)
 
 
-# In[8]:
+# In[10]:
 
 
 #%%time
@@ -218,11 +289,11 @@ for i in range(1,len(cluster_list)) :
     print("Len cluster testset :",len(ctest_sequences))
 
     
-    saveClusterDataSet(path,ctrain_genenames, ctrain_sequences, ctrain_expressions ,ctest_genenames,ctest_sequences,ctest_expressions,i)
+    saveClusterDataSetlog(path,ctrain_genenames, ctrain_sequences, ctrain_expressions ,ctest_genenames,ctest_sequences,ctest_expressions,i)
     i+=1
 
 
-# In[9]:
+# In[11]:
 
 
 #%%time
@@ -253,5 +324,5 @@ for seq_record in data_test :
         test_sequences.append(seqconvert)
 print("train_sequences :",len(train_sequences), "/","test_sequences :", len(test_sequences))
 
-saveDataSet(path,train_genenames, train_expressions, train_sequences, test_genenames, test_expressions, test_sequences)
+saveDataSetlog(path,train_genenames, train_expressions, train_sequences, test_genenames, test_expressions, test_sequences)
 

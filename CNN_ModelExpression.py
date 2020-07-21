@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[24]:
+# In[1]:
 
 
 import torch
@@ -19,7 +19,7 @@ import sys
 from sklearn.metrics import classification_report, f1_score, precision_recall_fscore_support, roc_curve,roc_auc_score,r2_score,mean_squared_error
 
 
-# In[25]:
+# In[2]:
 
 
 class Kbar(object):
@@ -255,7 +255,7 @@ class Pbar(object):
         sys.stdout.flush()
 
 
-# In[26]:
+# In[3]:
 
 
 class SeqDataset(Dataset):
@@ -298,7 +298,7 @@ class SeqDataset(Dataset):
         return {'seq':seq, 'exp':exp, 'genename':genename}
 
 
-# In[27]:
+# In[4]:
 
 
 class EarlyStopping:
@@ -348,7 +348,7 @@ class EarlyStopping:
         self.val_loss_min = val_loss
 
 
-# In[28]:
+# In[5]:
 
 
 class CnnModel(nn.Module):
@@ -358,9 +358,9 @@ class CnnModel(nn.Module):
         self.batch1 = nn.BatchNorm2d(50, track_running_stats=False)
         self.maxpool1 = nn.MaxPool1d(2)
         self.conv2 = nn.Conv1d(50, 30, 3, bias=False)
-        self.conv3 = nn.Conv1d(30, 30, 3, bias=False)
+        #self.conv3 = nn.Conv1d(30, 30, 3, bias=False)
         self.flatt = nn.Flatten()
-        self.dense1 = nn.Linear(1320, 500)
+        self.dense1 = nn.Linear(1380, 500)
         self.dropout1 = nn.Dropout(p=0.3)
         self.dense2 = nn.Linear(500, 200)
         self.dense_output = nn.Linear(200, 1)
@@ -373,8 +373,8 @@ class CnnModel(nn.Module):
         x = self.maxpool1(x)
         x = self.conv2(x)
         x = F.relu(x)
-        x = self.conv3(x)
-        x = F.relu(x)
+        #x = self.conv3(x)
+        #x = F.relu(x)
         x = self.flatt(x)
         x = self.dense1(x)
         x = self.dropout1(x)
@@ -383,7 +383,7 @@ class CnnModel(nn.Module):
         return output
 
 
-# In[29]:
+# In[6]:
 
 
 def load_data(path_to_data,batch,split_ratio = 0.2):
@@ -434,7 +434,7 @@ def load_data(path_to_data,batch,split_ratio = 0.2):
     return train_loader, valid_loader, test_loader
 
 
-# In[30]:
+# In[7]:
 
 
 def load_clusterdata(path_to_data,batch,cluster,split_ratio = 0.2):
@@ -485,7 +485,7 @@ def load_clusterdata(path_to_data,batch,cluster,split_ratio = 0.2):
     return train_loader, valid_loader, test_loader
 
 
-# In[31]:
+# In[8]:
 
 
 def load_testdatacluster(cluster, batch):
@@ -530,7 +530,7 @@ def load_testdatacluster(cluster, batch):
     return test_loader
 
 
-# In[32]:
+# In[9]:
 
 
 def training_pytorch_model(custom_model, train_loader, valid_loader, batch, epoch,
@@ -681,7 +681,7 @@ def training_pytorch_model(custom_model, train_loader, valid_loader, batch, epoc
         return 0
 
 
-# In[33]:
+# In[10]:
 
 
 def test_pytorch_model(custom_model, test_loader, device,path_save, verbose=True):
@@ -729,7 +729,7 @@ def test_pytorch_model(custom_model, test_loader, device,path_save, verbose=True
     return preds, true
 
 
-# In[34]:
+# In[11]:
 
 
 def plot_loss_curve(avg_train_losses, avg_valid_losses,indice,earlyid,batch_size,epoch,spearman_test,pearson_test):
@@ -783,7 +783,7 @@ def plot_loss_curve(avg_train_losses, avg_valid_losses,indice,earlyid,batch_size
     
 
 
-# In[35]:
+# In[12]:
 
 
 def plot_corr_curve(avg_valid_pear, avg_valid_spear,indice,earlyid,batch_size,epoch,spearman_test,pearson_test):
@@ -834,18 +834,23 @@ def plot_corr_curve(avg_valid_pear, avg_valid_spear,indice,earlyid,batch_size,ep
     fig.savefig(path, bbox_inches='tight')  
 
 
-# In[1]:
+# In[15]:
 
 
-def write_listtransferresults(cluster,cluster_len,spearmantest_list,pearsontest_list) : 
-    path = "./resultstxt/result_testcluster"+str(cluster)
+def write_listtransferresults(cluster,cluster_len,spearmantest_list,pearsontest_list,batch_size,epoch,text) : 
+    path = "./resultstxt/"+text+"_e"+ str(epoch)+"_b"+ str(batch_size) + "_" + "result_testcluster"+str(cluster)
     f = open(path, "w")
     for i in range(cluster_len):
+        if  (pearsontest_list[i]>0.5) :
+            print("Test cluster " + str(cluster) + " -> cluster " + str(i) + ": pearson = " + str(pearsontest_list[i])+ "\n")
+        if (spearmantest_list[i]>0.5) :
+            print("Test cluster " + str(cluster) + " -> cluster " + str(i) + ": spearman = "+ str(spearmantest_list[i]) + "\n")
+
         f.write("Test cluster " + str(cluster) + " -> cluster " + str(i) + ": spearman = "+ str(spearmantest_list[i]) + " pearson = " + str(pearsontest_list[i])+ "\n")
     f.close    
 
 
-# In[ ]:
+# In[16]:
 
 
 def write_resultfile(path,cluster,cluster_len,spearmantest_list,pearsontest_list) : 
@@ -871,7 +876,7 @@ def write_resultfile(path,cluster,cluster_len,spearmantest_list,pearsontest_list
     f.close    
 
 
-# In[38]:
+# In[17]:
 
 
 clusters_spearman = []
@@ -931,47 +936,4 @@ for i in range(21):
     #write_listtransferresults(i,21,spearmantest_list,pearsontest_list,batch_size,epoch,text)
 
     print("\n***** Fin entrainement/test avec le cluster",i,"*****\n")
-
-
-# In[16]:
-
-
-clusters_spearman = []
-clusters_pearson = []
-for i in range(21):
-    print("\n*** Démarrage des test avec le cluster",i,"***\n")
-    
-    #paramètres du modèle    
-    batch_size = 64
-    epoch = 2
-    net = CnnModel()
-    criterion = nn.SmoothL1Loss()
-    optimizer = torch.optim.Adam(net.parameters())
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    
-    if(i == 0) :
-        #paramètres du modèle
-        path = "./dataset/"
-        train_loader, valid_loader, test_loader = load_data(path,batch_size)
-        path_save = "CNNModel_checkpoint.pt"
-    else :
-        path_save = "CNNModelcluster"+str(i)+"_checkpoint.pt"
-        path = "./cluster_dataset/"
-        train_loader, valid_loader, test_loader = load_clusterdata(path,batch_size,i)
-
-    print("Save at",path_save)
-      
-    avg_train_losses, avg_valid_losses, avg_valid_spear, avg_valid_pear, early_id = training_pytorch_model(net, train_loader, valid_loader, batch_size, epoch, criterion, optimizer, device,path_save)
-    preds, true = test_pytorch_model(net, test_loader, device,path_save)
-    spearman_test = spearmanr(preds, true)[0]
-    pearson_test = pearsonr(preds,true)[0]
-
-    clusters_spearman.append(spearman_test)
-    clusters_pearson.append(pearson_test)
-    plot_loss_curve(avg_train_losses, avg_valid_losses,i,early_id,batch_size,epoch,spearman_test,pearson_test)
-    plot_corr_curve(avg_valid_pear, avg_valid_spear,i,early_id,batch_size,epoch,spearman_test,pearson_test)
-
-    print("\n*** Fin des test avec le cluster",i,"***\n")
-    
-write_clustersresults(21, clusters_spearman, clusters_pearson)
 
